@@ -53,7 +53,7 @@ public partial class _Default : System.Web.UI.Page
             if (row != null)
             {
                 //displays all the row data into the textboxes.
-                Title_TextBox.Text = row.Cells[1].ToString();
+                Title_TextBox.Text = dgv.SelectedRow.Cells[2].Text;
 
                 int count = 0;
                 List<string> TL = new List<string>();
@@ -62,21 +62,22 @@ public partial class _Default : System.Web.UI.Page
 
                     //need something to check the id in the tags table. 
                     //need to iterate through the tags table and check tagID's
-                    if (IdTable.Rows[count][0].ToString() == row.Cells[0].ToString())
+                    if (IdTable.Rows[count][0].ToString() == dgv.SelectedRow.Cells[1].Text)
                     {
                         foreach (DataRow dr in TagsTable.Rows)
                         {
                             //check if the id's tagid is the same as the tag's tagid
                             if ((int)IdTable.Rows[count][1] == (int)dr[0])
                             {
+
                                 TL.Add(dr[1].ToString());
+                                
                             }
                         }
                     }
                     count++;
                 }
-                Tags_TextBox.Text = "";
-                //TODO: make a fucntion to do this. 
+                Tags_TextBox.Text = ""; 
                 foreach (string ele in TL)
                 {
                     if (ele.Equals(TL.Last()))
@@ -84,7 +85,7 @@ public partial class _Default : System.Web.UI.Page
                     else
                         Tags_TextBox.Text += ele + ":";
                 }
-                Text_TextBox.Text = row.Cells[2].ToString();
+                Text_TextBox.Text = dgv.SelectedRow.Cells[4].Text;
             }
         }
     }
@@ -134,9 +135,48 @@ public partial class _Default : System.Web.UI.Page
         id_dset = CreateDataset("IDs");
         IdTable = id_dset.Tables[0];
 
-
-        GridView1.DataSource = CreateViewset();
         GridView1.DataBind();
+
+        
+        int count = 0;
+        GridView1.SelectRow(count);
+        List<string> TL = new List<string>();
+        for (int i = 0; i <= GridView1.Rows.Count - 1; i++)
+        {
+            GridView1.SelectRow(i);
+            count = 0;
+            foreach (DataRow idrow in IdTable.Rows)
+            {
+                //need something to check the id in the tags table. 
+                //need to iterate through the tags table and check tagID's
+                if (IdTable.Rows[count][0].ToString() == GridView1.SelectedRow.Cells[1].Text)
+                {
+                    foreach (DataRow dr in TagsTable.Rows)
+                    {
+                        //check if the id's tagid is the same as the tag's tagid
+                        if ((int)IdTable.Rows[count][1] == (int)dr[0])
+                        {
+                            TL.Add(dr[1].ToString());
+                        }
+                    }
+
+                }
+
+
+                count++;
+            }
+
+            foreach (string ele in TL)
+            {
+                if (ele.Equals(TL.Last()))
+                    GridView1.SelectedRow.Cells[3].Text += ele;
+                else
+                    GridView1.SelectedRow.Cells[3].Text += ele + ":";
+            }
+
+            TL = new List<string>();
+            //GridView1.DataSource = CreateViewset();
+        }
     }
 
     private void con_update()
@@ -210,6 +250,21 @@ public partial class _Default : System.Web.UI.Page
         }
     }
 
+    public List<string> tagSplit(string tags)
+    {
+        string[] tagEm = tags.Split(':');
+        List<string> tagList = new List<string>();
+
+        for (int t = 0; t < tagEm.Length; t++)
+        {
+            tagList.Add(tagEm[t]);
+        }
+
+        return tagList;
+    
+    }
+
+
     private void changeNote()
     {
 
@@ -218,7 +273,7 @@ public partial class _Default : System.Web.UI.Page
             //Displays a message if nothing is entered.
 
             if (Title_TextBox.Text == "")
-                Response.Write("<script>alert(Please enter a title for your note.)(No Title)</script>");
+                Response.Write("<script>alert(Please enter a title for your note.)</script>");
             //MessageBox.Show("Please enter a title for your note.", "No Title");
             if (Tags_TextBox.Text == "")
                 Response.Write("<script>alert(Please enter tags seperated by : \n ex. Tags:Tag:Note)</script>");
@@ -236,12 +291,9 @@ public partial class _Default : System.Web.UI.Page
                 DateTime timenow = DateTime.Now;
 
                 //Send the tags to the tagslitter
-                //List<string> tagList = TS.tagger(Tags_TextBox.Text);
+                List<string> tagList = tagSplit(Tags_TextBox.Text);
 
-                //Make a new note object
-                //NoteItem NI = new NoteItem(Text_TextBox.Text, Title_TextBox.Text, tagList);
-
-                //database magic
+                //add the new row to the note database.
                 DataRow newRow = NoteTable.NewRow();
                 newRow["Title"] = Title_TextBox.Text;
                 newRow["TextBody"] = Text_TextBox.Text;
@@ -263,10 +315,10 @@ public partial class _Default : System.Web.UI.Page
                 { note_row--; }
                 note_row = Convert.ToInt32(NoteTable.Rows[note_row - 1][0]);
 
-                //foreach (string tag in tagList)
+                foreach (string tag in tagList)
                 {
                     DataRow tagRow = TagsTable.NewRow();
-                    //tagRow["Tag"] = tag;
+                    tagRow["Tag"] = tag;
                     TagsTable.Rows.Add(tagRow);
                     DataRow idRow = IdTable.NewRow();
                     //note id is wrong, need to check for null values.
@@ -285,8 +337,6 @@ public partial class _Default : System.Web.UI.Page
                 //Update the data grid.
                 con_update();
                 refreshGrid();
-                //dataGridView1.Update();
-                //dataGridView1.Refresh();
             
         }
     }
@@ -296,21 +346,72 @@ public partial class _Default : System.Web.UI.Page
         Title_TextBox.Text = Tags_TextBox.Text = Text_TextBox.Text = "";
     }
 
-    protected void Button1_Click(object sender, EventArgs e)
+    protected void ShowTags_Button_Click(object sender, EventArgs e)
     {
+        //tagSplit tg = new TagSplit();
+        if(Tags_TextBox.Text == "")
+        {
+            //Message
+        }
+        else
+        {
+            //Declares a string and asigns it to the string returned by the class library
+            List<string> inTags = tagSplit(Tags_TextBox.Text);
 
+            string tagList = "";
+
+            //Displays the tags, each of them on a different line
+            foreach (string ele in inTags)
+            {
+                tagList += ele + "\n";
+            }
+            tagList = "";
+
+            //List of hits to tagid and tag
+            List<string> hits = new List<string>();
+
+            int count = 0;
+
+            foreach (var x in inTags)
+            {
+                foreach (DataRow dr in IdTable.Rows)
+                {
+                    if (dr["TagID"].ToString() == x.ToString())
+                    {
+                        hits.Add(dr["NoteID"].ToString());
+                    }
+                }
+            }
+
+            List<string> matches = new List<string>();
+
+            foreach (var x in hits)
+            {
+                foreach (DataRow dr in NoteTable.Rows)
+                {
+                    if (dr["NoteID"].ToString() == x.ToString())
+                    {
+                        tagList += dr["Title"].ToString() + ":\n";
+                        tagList += dr["TextBody"].ToString() + "\n\n";
+                        count++;
+                    }
+                }
+            }
+
+            tagList += "Matches found: " + count;
+        }
     }
     protected void Delete_Button_Click(object sender, EventArgs e)
     {
         int count = 0;
         //checks for something to be selected.
-        //if (GridView1.SelectedRow > 0)
-        //{
+        if (GridView1.SelectedRow.Cells.Count > 0)
+        {
             //remove all the tags related
             foreach (DataRow idrow in IdTable.Rows)
             {
                 //if the note ids match
-                //if (IdTable.Rows[count][0].ToString() == GridView1.SelectedRow[0].Cells[0].Value.ToString())
+                if (IdTable.Rows[count][0].ToString() == GridView1.SelectedRow.Cells[1].Text)
                 {
                     //go through tags table 
                     for (int i = TagsTable.Rows.Count - 1; i >= 0; i--)
@@ -321,81 +422,33 @@ public partial class _Default : System.Web.UI.Page
                             TagsTable.AcceptChanges();
                         }
                     }
-                    //TagsTable.Rows[(int)IdTable.Rows[count][1]].Delete();
                     IdTable.Rows[count].Delete();
                 }
                 count++;
             }
-            //remove the selected row.
-            //delete the row
-            GridView1.DeleteRow(GridView1.SelectedIndex);
-            //TODO MAKE ERORR LABLES
-            //clears the text boxes.
+
+            NoteTable.Rows[GridView1.SelectedRow.RowIndex].Delete();
             clearTextBoxes();
             //delete the id from the idtable before it deletes it from the noteID table. 
             con_delete();
             con_update();
             refreshGrid();
-        //}
-        //else
+        }
+        else
             //let user know, no row was selected.
             //MessageBox.Show("please select note to be deleted.", "no selection.");
-            //Response.Write("<script>alert(please select note to be deleted)(No Selection)</script>");
-            //int count = 0;
-            //checks for something to be selected.
-            //if (GridView1.SelectedRow. > 0)
-            //{
-                //remove all the tags related
-                //foreach (DataRow idrow in IdTable.Rows)
-                {
-                    //if the note ids match
-                    //if (IdTable.Rows[count][0].ToString() == GridView1.SelectedRow[0].Cells[0].Value.ToString())
-                    {
-                        //go through tags table 
-                        for (int i = TagsTable.Rows.Count - 1; i >= 0; i--)
-                        {
-                            if ((int)IdTable.Rows[count][1] == (int)TagsTable.Rows[i][0])
-                            {
-                                TagsTable.Rows[i].Delete();
-                                TagsTable.AcceptChanges();
-                            }
-                        }
-                        //TagsTable.Rows[(int)IdTable.Rows[count][1]].Delete();
-                        IdTable.Rows[count].Delete();
-                    }
-                    count++;
-                }
-                //remove the selected row.
-                //todo: remove it's tags as well?
-
-                /*foreach (GridViewRow item in this.GridView1.SelectedRow)
-                {
-                    
-                    dataGridView1.Rows.RemoveAt(item.Index);
-                   
-                }*/
-                //clears the text boxes.
-                clearTextBoxes();
-                //delete the id from the idtable before it deletes it from the noteID table. 
-                con_delete();
-                con_update();
-                refreshGrid();
-            //}
-            //else
-                //let user know, no row was selected.
-                //MessageBox.Show("please select note to be deleted.", "no selection.");
-                //Response.Write("<script>alert(Please select a note to be deleted)(No Selection)</script>");
-    }
+            Response.Write("<script>alert(please select note to be deleted)(No Selection)</script>");
+     }
     protected void Edit_Button_Click(object sender, EventArgs e)
     {
         //check for something selected. 
-        //if (GridView1.SelectedRow.Count > 0)
+        if (GridView1.SelectedRow.Cells.Count > 0)
         {
             //go through table.
             foreach (DataRow dr in NoteTable.Rows)
             {
                 //TODO: edit tags as well.
-                //if (GridView1.SelectedRow[0].Cells[0].Value.ToString() == dr[0].ToString())
+                if (GridView1.SelectedRow.Cells[1].Text == dr[0].ToString())
                 {
                     DateTime timenow = DateTime.Now;
                     DataRow newRow = NoteTable.NewRow();
@@ -407,14 +460,14 @@ public partial class _Default : System.Web.UI.Page
 
                     //New tagsplit object
                     //TagSplit TS = new TagSplit();
-                    //List<string> TL = TS.tagger(Tags_TextBox.Text);
+                    List<string> TL = tagSplit(Tags_TextBox.Text);
                     //remove all the tags related
                     //go through tags table 
 
                     foreach (DataRow idrow in IdTable.Rows)
                     {
                         //if the note ids match
-                        //if (IdTable.Rows[count][0].ToString() == GridView1.SelectedRow[0].Cells[0].Value.ToString())
+                        if (IdTable.Rows[count][0].ToString() == GridView1.SelectedRow.Cells[1].Text)
                         {
 
                             //TagsTable.Rows[(int)IdTable.Rows[count][1]].Delete();
@@ -431,7 +484,7 @@ public partial class _Default : System.Web.UI.Page
                         count++;
                     }
 
-                    //int noteid = (int)GridView1.SelectedRow[0].Cells[0].Value;
+                    int noteid = Convert.ToInt32(GridView1.SelectedRow.Cells[1].Text);
                     con_delete();
                     con_update();
                     refreshGrid();
@@ -443,13 +496,13 @@ public partial class _Default : System.Web.UI.Page
                     { tag_row--; }
                     tag_row = Convert.ToInt32(TagsTable.Rows[tag_row - 1][0]);
 
-                    //foreach (string tag in TL)
+                    foreach (string tag in TL)
                     {
                         DataRow tagRow = TagsTable.NewRow();
-                       // tagRow["Tag"] = tag;
+                        tagRow["Tag"] = tag;
                         TagsTable.Rows.Add(tagRow);
                         DataRow idRow = IdTable.NewRow();
-                        //idRow["NoteID"] = noteid;
+                        idRow["NoteID"] = noteid;
                         //this is currently incorrect and does not point to the correct tag. 
 
                         idRow["TagID"] = tag_row + 1 + deleted;
@@ -459,19 +512,18 @@ public partial class _Default : System.Web.UI.Page
                     clearTextBoxes();
                     con_update();
                     refreshGrid();
-                    //MessageBox.Show("Note Edited", "Changed");
                     Response.Write("<script>alert(Note Edited)(Changed)</script>");
                     break;
                 }
             }
         }
-        //else
+        else
             //if nothing is selected, tell user.
             //MessageBox.Show("please select note to be edited.", "no selection.");
-            //Response.Write("<script>alert(Please select note to be edited)(No Selection)</script>");
+            Response.Write("<script>alert(Please select note to be edited)(No Selection)</script>");
     }
     protected void GridView1_Sorting(object sender, GridViewSortEventArgs e)
     {
-
+        refreshGrid();
     }
 }

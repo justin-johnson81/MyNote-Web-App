@@ -27,7 +27,7 @@
             Font-Size="24pt" Height="53px" Width="116px"></asp:Label>
         <asp:TextBox ID="Tags_TextBox" runat="server" Height="53px" Width="171px"></asp:TextBox>
         <asp:Button ID="SeachTags_Button" runat="server" Font-Bold="True" Height="53px" 
-            Text="Search Tags" Width="132px" onclick="Button1_Click" />
+            Text="Search Tags" Width="132px" onclick="ShowTags_Button_Click" />
     </p>
     <div align="center">
         <asp:Label ID="Text_Label" runat="server" Font-Bold="True" Font-Size="24pt" 
@@ -42,8 +42,26 @@
     </div>
     <asp:GridView ID="GridView1" runat="server" AllowSorting="True" 
         AutoGenerateSelectButton="True" 
-        onselectedindexchanged="GridView1_SelectedIndexChanged">
+        onselectedindexchanged="GridView1_SelectedIndexChanged" 
+        AutoGenerateColumns="False" DataKeyNames="NoteID" 
+        DataSourceID="SqlDataSource2" Width="854px">
+        <Columns>
+            <asp:BoundField DataField="NoteID" HeaderText="NoteID" InsertVisible="False" 
+                ReadOnly="True" SortExpression="NoteID" />
+            <asp:BoundField DataField="Title" HeaderText="Title" SortExpression="Title" />
+            <asp:BoundField HeaderText="Tags" ReadOnly="True" />
+            <asp:BoundField DataField="TextBody" HeaderText="TextBody" 
+                SortExpression="TextBody" />
+            <asp:BoundField DataField="TimeCreated" HeaderText="TimeCreated" 
+                SortExpression="TimeCreated" />
+            <asp:BoundField DataField="TimeUpdated" HeaderText="TimeUpdated" 
+                SortExpression="TimeUpdated" />
+
+        </Columns>
     </asp:GridView>
+    <asp:SqlDataSource ID="SqlDataSource2" runat="server" 
+        ConnectionString="<%$ ConnectionStrings:notebase5ConnectionString2 %>" 
+        SelectCommand="SELECT * FROM [Notes]"></asp:SqlDataSource>
     </form>
 </body>
 </html>
