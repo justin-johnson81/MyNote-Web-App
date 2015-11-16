@@ -44,7 +44,8 @@
         AutoGenerateSelectButton="True" 
         onselectedindexchanged="GridView1_SelectedIndexChanged" 
         AutoGenerateColumns="False" DataKeyNames="NoteID" 
-        DataSourceID="SqlDataSource2" Width="854px">
+        DataSourceID="SqlDataSource2" Width="854px" 
+        onrowdatabound="GridView1_RowDataBound">
         <Columns>
             <asp:BoundField DataField="NoteID" HeaderText="NoteID" InsertVisible="False" 
                 ReadOnly="True" SortExpression="NoteID" />

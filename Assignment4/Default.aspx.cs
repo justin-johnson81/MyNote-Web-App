@@ -34,6 +34,9 @@ public partial class _Default : System.Web.UI.Page
     {
         refreshGrid();
     }
+
+
+
     protected void add_btn_Click(object sender, EventArgs e)
     {
         changeNote();
@@ -41,10 +44,23 @@ public partial class _Default : System.Web.UI.Page
         //Show the user that the note was added.
         clearTextBoxes();
     }
+
+    protected void GridView1_RowDataBound(object sender, GridViewRowEventArgs e)
+    {
+        if (GridView1.Rows.Count > NoteTable.Rows.Count - 1)
+        {
+            if (GridView1.Rows[1].Cells[3].Text == "")
+            {
+                insert_tags();
+            }
+        }
+    }
+
     protected void GridView1_SelectedIndexChanged(object sender, EventArgs e)
     {
         //gets the sender object data.
         GridView dgv = sender as GridView;
+
         //checks to make sure it wasn't empty/no selection
         if (dgv != null )//&& dgv.SelectedRow > 0)
         {
@@ -54,37 +70,7 @@ public partial class _Default : System.Web.UI.Page
             {
                 //displays all the row data into the textboxes.
                 Title_TextBox.Text = dgv.SelectedRow.Cells[2].Text;
-
-                int count = 0;
-                List<string> TL = new List<string>();
-                foreach (DataRow idrow in IdTable.Rows)
-                {
-
-                    //need something to check the id in the tags table. 
-                    //need to iterate through the tags table and check tagID's
-                    if (IdTable.Rows[count][0].ToString() == dgv.SelectedRow.Cells[1].Text)
-                    {
-                        foreach (DataRow dr in TagsTable.Rows)
-                        {
-                            //check if the id's tagid is the same as the tag's tagid
-                            if ((int)IdTable.Rows[count][1] == (int)dr[0])
-                            {
-
-                                TL.Add(dr[1].ToString());
-                                
-                            }
-                        }
-                    }
-                    count++;
-                }
-                Tags_TextBox.Text = ""; 
-                foreach (string ele in TL)
-                {
-                    if (ele.Equals(TL.Last()))
-                        Tags_TextBox.Text += ele;
-                    else
-                        Tags_TextBox.Text += ele + ":";
-                }
+                Tags_TextBox.Text = dgv.SelectedRow.Cells[3].Text;
                 Text_TextBox.Text = dgv.SelectedRow.Cells[4].Text;
             }
         }
@@ -105,20 +91,18 @@ public partial class _Default : System.Web.UI.Page
         return dataSet;
     }
 
-    public DataSet CreateViewset()
+
+    public int get_last_id()
     {
-        string cmdString = @"SELECT     Notes.Title, Tags.Tag, Notes.TextBody, Notes.TimeCreated, Notes.TimeUpdated
-                      FROM         Notes INNER JOIN
-                      IDs ON Notes.NoteID = IDs.NoteID INNER JOIN
-                      Tags ON IDs.TagID = Tags.TagID";
+        connection = new SqlConnection(connstr);
+        connection.Open();
+        SqlCommand cmd = new SqlCommand("SELECT IDENT_CURRENT('Notes')",connection);
+        SqlDataReader dr = cmd.ExecuteReader();
+        dr.Read();
+        int i = Convert.ToInt32(dr[0].ToString());
+        connection.Close();
+        return i + 1;
 
-        dataAdapter = new SqlDataAdapter(cmdString, connstr);
-        DataSet dataSet = new DataSet();
-
-        dataAdapter.Fill(dataSet);
-        dataAdapter.Dispose();
-
-        return dataSet;
     }
 
     //This function is used to grab the data from the database tables. 
@@ -137,20 +121,26 @@ public partial class _Default : System.Web.UI.Page
 
         GridView1.DataBind();
 
-        
+        //insert_tags();
+    }
+
+    private void insert_tags()
+    {
+
         int count = 0;
-        GridView1.SelectRow(count);
+        //list of string to store the tags
         List<string> TL = new List<string>();
-        for (int i = 0; i <= GridView1.Rows.Count - 1; i++)
+        //iterate through the whole table.
+        foreach(GridViewRow row in GridView1.Rows)
         {
-            GridView1.SelectRow(i);
             count = 0;
+            //iterate through id table rows
             foreach (DataRow idrow in IdTable.Rows)
             {
-                //need something to check the id in the tags table. 
-                //need to iterate through the tags table and check tagID's
-                if (IdTable.Rows[count][0].ToString() == GridView1.SelectedRow.Cells[1].Text)
+                //check id.noteid vs the note.noteid
+                if (IdTable.Rows[count][0].ToString() == row.Cells[1].Text)
                 {
+                    //iterate through the tags table
                     foreach (DataRow dr in TagsTable.Rows)
                     {
                         //check if the id's tagid is the same as the tag's tagid
@@ -162,20 +152,18 @@ public partial class _Default : System.Web.UI.Page
 
                 }
 
-
                 count++;
             }
 
             foreach (string ele in TL)
             {
                 if (ele.Equals(TL.Last()))
-                    GridView1.SelectedRow.Cells[3].Text += ele;
+                    row.Cells[3].Text += ele;
                 else
-                    GridView1.SelectedRow.Cells[3].Text += ele + ":";
+                    row.Cells[3].Text += ele + ":";
             }
 
             TL = new List<string>();
-            //GridView1.DataSource = CreateViewset();
         }
     }
 
@@ -198,6 +186,7 @@ public partial class _Default : System.Web.UI.Page
         connection.Close();
 
     }
+
 
     //Calls the ID tables to update it
     private void con_delete()
@@ -273,13 +262,13 @@ public partial class _Default : System.Web.UI.Page
             //Displays a message if nothing is entered.
 
             if (Title_TextBox.Text == "")
-                Response.Write("<script>alert(Please enter a title for your note.)</script>");
+                Response.Write("<script>alert('Please enter a title for your note.')</script>");
             //MessageBox.Show("Please enter a title for your note.", "No Title");
             if (Tags_TextBox.Text == "")
-                Response.Write("<script>alert(Please enter tags seperated by : \n ex. Tags:Tag:Note)</script>");
+                Response.Write("<script>alert('Please enter tags seperated by : \n ex. Tags:Tag:Note')</script>");
             //MessageBox.Show("Please enter tags seperated by : \n ex. Tags:Tag:Note", "Tags Error");
             if (Text_TextBox.Text == "")
-                Response.Write("<script>alert(Please the body of your text.)(No Body)</script>");
+                Response.Write("<script>alert('Please the body of your text.')</script>");
             //MessageBox.Show("Please the body of your text.", "No Body");
         }
 
@@ -309,11 +298,9 @@ public partial class _Default : System.Web.UI.Page
                 { tag_row--; }
                 tag_row = Convert.ToInt32(TagsTable.Rows[tag_row - 1][0]);
 
-                int note_row = NoteTable.Rows.Count;
+                //int note_row = IDENT_CURRENT("NotesTable");
                 //checks for null values in tags table because previous tags were deleted. 
-                while (NoteTable.Rows[note_row - 1][0] == DBNull.Value)
-                { note_row--; }
-                note_row = Convert.ToInt32(NoteTable.Rows[note_row - 1][0]);
+
 
                 foreach (string tag in tagList)
                 {
@@ -322,7 +309,7 @@ public partial class _Default : System.Web.UI.Page
                     TagsTable.Rows.Add(tagRow);
                     DataRow idRow = IdTable.NewRow();
                     //note id is wrong, need to check for null values.
-                    idRow["NoteID"] = note_row + 1;
+                    idRow["NoteID"] = get_last_id();
 
                     idRow["TagID"] = tag_row + 1;
                     IdTable.Rows.Add(idRow);
@@ -332,7 +319,7 @@ public partial class _Default : System.Web.UI.Page
 
                 //Show the user that the note was added.
                 //MessageBox.Show("Note added", "New Note");
-                Response.Write("<script>alert(Note added)(New Note)</script>");
+                Response.Write("<script>alert('Note added')</script>");
 
                 //Update the data grid.
                 con_update();
@@ -447,7 +434,7 @@ public partial class _Default : System.Web.UI.Page
             //go through table.
             foreach (DataRow dr in NoteTable.Rows)
             {
-                //TODO: edit tags as well.
+                //edit tags as well.
                 if (GridView1.SelectedRow.Cells[1].Text == dr[0].ToString())
                 {
                     DateTime timenow = DateTime.Now;
@@ -502,8 +489,8 @@ public partial class _Default : System.Web.UI.Page
                         tagRow["Tag"] = tag;
                         TagsTable.Rows.Add(tagRow);
                         DataRow idRow = IdTable.NewRow();
-                        idRow["NoteID"] = noteid;
-                        //this is currently incorrect and does not point to the correct tag. 
+
+                        idRow["NoteID"] = noteid; 
 
                         idRow["TagID"] = tag_row + 1 + deleted;
                         IdTable.Rows.Add(idRow);
@@ -520,10 +507,7 @@ public partial class _Default : System.Web.UI.Page
         else
             //if nothing is selected, tell user.
             //MessageBox.Show("please select note to be edited.", "no selection.");
-            Response.Write("<script>alert(Please select note to be edited)(No Selection)</script>");
+            Response.Write("<script>alert('Please select note to be edited')</script>");
     }
-    protected void GridView1_Sorting(object sender, GridViewSortEventArgs e)
-    {
-        refreshGrid();
-    }
+
 }
