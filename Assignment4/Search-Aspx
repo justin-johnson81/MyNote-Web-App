@@ -1,0 +1,132 @@
+<%@ Page Language="C#" AutoEventWireup="true" CodeFile="Default.aspx.cs" Inherits="_Default" %>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head id="Head1" runat="server">
+    <title></title>
+</head>
+<body style="height: 281px">
+    <form id="form1" runat="server" visible="True">
+    <div>
+    
+        <p align="center">
+            <asp:Label ID="Title" runat="server" Font-Bold="True" Text="My Notes"></asp:Label>
+        </p>
+    
+    </div>
+    <p align="center">
+        <asp:Label ID="Title_Label" runat="server" Font-Bold="True" Font-Size="24pt" 
+            Height="53px" Text="Title" Width="116px"></asp:Label>
+        <asp:TextBox ID="Title_TextBox" runat="server" Height="51px" Width="171px"></asp:TextBox>
+        <asp:Button ID="AddNote_Button" runat="server" Font-Bold="True" Height="53px" 
+            onclick="add_btn_Click" Text="Add new note/Save" Width="132px" />
+    </p>
+    <p align="center">
+        <asp:Label ID="Tags_Label" runat="server" Text="Tags" Font-Bold="True" 
+            Font-Size="24pt" Height="53px" Width="116px"></asp:Label>
+        <asp:TextBox ID="Tags_TextBox" runat="server" Height="53px" Width="171px"></asp:TextBox>
+        <asp:Button ID="SeachTags_Button" runat="server" Font-Bold="True" Height="53px" 
+            Text="Search Tags" Width="132px" onclick="ShowTags_Button_Click" />
+    </p>
+    <div align="center">
+        <asp:Label ID="Text_Label" runat="server" Font-Bold="True" Font-Size="24pt" 
+            Height="53px" Text="Text" Width="116px"></asp:Label>
+        <asp:TextBox ID="Text_TextBox" runat="server" Height="92px" Width="295px"></asp:TextBox>
+            <asp:Button ID="Delete_Button" runat="server" Text="Delete" 
+            Font-Bold="True" Height="25px" onclick="Delete_Button_Click" Width="132px" />
+        <div align="center">
+            <asp:Button ID="Edit_Button" runat="server" Font-Bold="True" Height="25px" 
+                Text="Edit" Width="132px" onclick="Edit_Button_Click" />
+    </div>
+    </div>
+    <asp:GridView ID="GridView1" runat="server" AllowSorting="True" 
+        AutoGenerateSelectButton="True" 
+        onselectedindexchanged="GridView1_SelectedIndexChanged" 
+        AutoGenerateColumns="False" DataKeyNames="NoteID" 
+         DataSourceID="SqlDataSource1" Width="854px">
+        <Columns>
+            <asp:BoundField DataField="NoteID" HeaderText="NoteID" InsertVisible="False" 
+                ReadOnly="True" SortExpression="NoteID" />
+            <asp:BoundField DataField="Title" HeaderText="Title" SortExpression="Title" />
+            <asp:BoundField DataField="Tags" HeaderText="Tags" SortExpression="Tags" />
+            <asp:BoundField DataField="TextBody" HeaderText="TextBody" 
+                SortExpression="TextBody" />
+            <asp:BoundField DataField="TimeCreated" HeaderText="TimeCreated" 
+                SortExpression="TimeCreated" />
+            <asp:BoundField DataField="TimeUpdated" HeaderText="TimeUpdated" 
+                SortExpression="TimeUpdated" />
+
+        </Columns>
+    </asp:GridView>
+    <asp:SqlDataSource ID="SqlDataSource1" runat="server" 
+        ConnectionString="<%$ ConnectionStrings:notebase5ConnectionString2 %>" 
+        SelectCommand= "SELECT NoteID,
+                        Title, 
+                        dbo.ConTags(NoteID) AS Tags,
+                        TextBody, 
+                        TimeCreated, 
+                        TimeUpdated
+                        FROM Notes"></asp:SqlDataSource>
+    
+    
+    <asp:Label ID="labelNoResults" runat="server" Text="No Results Found." 
+        Visible="False"></asp:Label>
+    
+    
+    <br />
+
+    <asp:SqlDataSource ID="SqlDataSource2" runat="server" 
+        ConnectionString="<%$ ConnectionStrings:notebase5ConnectionString2 %>" 
+        SelectCommand= "SELECT NoteID,
+                        Title, 
+                        dbo.ConTags(NoteID) AS Tags,
+                        TextBody, 
+                        TimeCreated, 
+                        TimeUpdated
+                        FROM Notes
+                        WHERE (dbo.ConTags(NoteID) = @Parameter)
+                        OR (dbo.ConTags(NoteID) LIKE @Parameter +':')
+                        OR (dbo.ConTags(NoteID) LIKE ':' + @Parameter)">
+
+            <SelectParameters>
+                <asp:ControlParameter ControlID="Tags_TextBox" Name="Parameter" DefaultValue="" PropertyName="Text" Type="String" />
+            </SelectParameters>
+                        </asp:SqlDataSource>
+        
+    
+    <asp:Label 
+        ID="labelResults0" runat="server" Text="Search Results" 
+        Visible="False"></asp:Label>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<asp:Button 
+        ID="buttonSearchClear" runat="server" onclick="buttonSearchClear_Click" 
+        style="margin-left: 0px" Text="Clear Search" Width="111px" 
+        Visible="False" />
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<asp:Label 
+        ID="labelResults" runat="server" Text="Search Results: 999999:" 
+        Visible="False"></asp:Label>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <br />
+    
+    
+    <asp:GridView ID="GridView2" runat="server" AllowSorting="True" 
+        AutoGenerateSelectButton="True" 
+        onselectedindexchanged="GridView1_SelectedIndexChanged" 
+        AutoGenerateColumns="False" DataKeyNames="NoteID" 
+         DataSourceID="SqlDataSource2"  Width="854px" Visible="False">
+        <Columns>
+            <asp:BoundField DataField="NoteID" HeaderText="NoteID" InsertVisible="False" 
+                ReadOnly="True" SortExpression="NoteID" />
+            <asp:BoundField DataField="Title" HeaderText="Title" SortExpression="Title" />
+            <asp:BoundField DataField="Tags" HeaderText="Tags" SortExpression="Tags" />
+            <asp:BoundField DataField="TextBody" HeaderText="TextBody" 
+                SortExpression="TextBody" />
+            <asp:BoundField DataField="TimeCreated" HeaderText="TimeCreated" 
+                SortExpression="TimeCreated" />
+            <asp:BoundField DataField="TimeUpdated" HeaderText="TimeUpdated" 
+                SortExpression="TimeUpdated" />
+        </Columns>
+    </asp:GridView>
+    </form>
+</body>
+</html>
