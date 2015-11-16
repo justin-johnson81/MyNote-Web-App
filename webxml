@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!--
+  For more information on how to configure your ASP.NET application, please visit
+  http://go.microsoft.com/fwlink/?LinkId=169433
+  -->
+<configuration>
+  <connectionStrings>
+    <add name="notebase5ConnectionString" connectionString="Data Source=10.158.56.48;Initial Catalog=notebase5;User ID=net5"
+      providerName="System.Data.SqlClient" />
+    <add name="notebase5ConnectionString2" connectionString="Data Source=10.158.56.48;Initial Catalog=notebase5;Persist Security Info=True;User ID=net5;Password=dtbz5"
+      providerName="System.Data.SqlClient" />
+  </connectionStrings>
+  <system.web>
+    <compilation debug="true" targetFramework="4.0"/>
+  </system.web>
+</configuration>
